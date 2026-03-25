@@ -22,7 +22,7 @@ Rust CLI binary with the following modules:
 |---------|-------|
 | CLI | `clap` (derive API) |
 | Database | `libsql` (Turso embedded replica for cross-device sync) |
-| Embeddings | `ort` (ONNX Runtime) + `multilingual-e5-small` |
+| Embeddings | `fastembed` (multilingual-e5-small, auto-downloaded) |
 | Async runtime | `tokio` |
 | Error handling | `anyhow` (application) + `thiserror` (library errors) |
 | Serialization | `serde` + `serde_json` |

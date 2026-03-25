@@ -16,21 +16,61 @@ mneme indexes your Claude Code conversations and makes them searchable across se
 - **Claude Code hooks** — automatic ingestion on session end, context injection on session start
 - **Offline-first** — works fully offline with local SQLite; sync is opt-in
 
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph cc [Claude Code]
+        Session[Active session]
+        SE[session_end hook]
+        SS[session_start hook]
+    end
+
+    subgraph ingest [mneme ingest]
+        JSONL[Conversation JSONL] --> Parse[Parse & chunk Q&A pairs]
+        Parse --> Embed[Embed with multilingual-e5-small]
+        Embed --> Store[Store chunks + vectors]
+    end
+
+    subgraph search [mneme search]
+        Query[Search query]
+        Query --> FTS5[FTS5 keyword search]
+        Query --> Vec[Vector similarity search]
+        FTS5 --> RRF[Reciprocal Rank Fusion]
+        Vec --> RRF
+        RRF --> Decay[Time decay scoring]
+        Decay --> Results[Ranked results]
+    end
+
+    subgraph storage [Storage]
+        DB[(libsql / SQLite)]
+        Turso[(Turso cloud)]
+        DB <-.-> |optional sync| Turso
+    end
+
+    SE -->|auto-index| JSONL
+    Store --> DB
+    SS -->|auto-inject context| Query
+    DB --> FTS5
+    DB --> Vec
+    Results -->|context injected| Session
+```
+
 ## Installation
 
+### Prerequisites
+
+- [Rust toolchain](https://rustup.rs/) (1.75+)
+
+### Build & install
+
 ```bash
+git clone https://github.com/koborinainozomi/mneme.git
+cd mneme
 cargo install --path .
 ```
 
-### ONNX model setup
-
-mneme uses [multilingual-e5-small](https://huggingface.co/intfloat/multilingual-e5-small) for embedding generation. Download the ONNX model and place it in the cache directory:
-
-```bash
-mkdir -p ~/.cache/mneme/models
-# Download the ONNX model from Hugging Face
-# Place it at: ~/.cache/mneme/models/multilingual-e5-small.onnx
-```
+The embedding model ([multilingual-e5-small](https://huggingface.co/intfloat/multilingual-e5-small)) is downloaded automatically on first run via [fastembed](https://github.com/Anush008/fastembed-rs) — no manual setup required. All inference runs locally.
 
 ## Usage
 
@@ -120,11 +160,6 @@ Alternatively, pass them as flags:
 mneme --turso-url "libsql://..." --turso-token "..." search "query"
 ```
 
-## How it works
-
-1. **Ingest** — Claude Code conversation JSONL files are parsed, grouped into Q&A chunks, embedded with multilingual-e5-small, and stored in libsql
-2. **Search** — queries run through both FTS5 (trigram tokenizer) and vector similarity, results are merged with RRF (k=60), and scored with exponential time decay (default half-life: 30 days)
-3. **Sync** — when Turso credentials are configured, the local embedded replica syncs bidirectionally with the remote database
 
 ## License
 
