@@ -1,6 +1,19 @@
 [package]
 name = "mneme"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
+description = "Long-term memory engine for Claude Code, powered by libsql"
+license = "MIT"
+authors = ["koborinainozomi"]
 
 [dependencies]
+clap = { version = "4", features = ["derive", "env"] }
+libsql = "0.9"
+ort = "2.0.0-rc.12"
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+thiserror = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", features = ["serde"] }
+ndarray = "0.17"
