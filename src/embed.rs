@@ -51,7 +51,7 @@ impl Embedder {
     /// Generate embedding vectors for a batch of texts.
     pub fn embed_batch(&mut self, texts: &[&str]) -> Result<Vec<Vec<f32>>, EmbedError> {
         self.model
-            .embed(texts.to_vec(), None)
+            .embed(texts, None)
             .map_err(|e| EmbedError::Inference(e.to_string()))
     }
 }
